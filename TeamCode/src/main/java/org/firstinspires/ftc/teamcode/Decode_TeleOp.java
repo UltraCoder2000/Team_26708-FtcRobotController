@@ -19,7 +19,7 @@ public class DecodeTeleOp extends LinearOpMode {
     private double startingTransferSpeed;
     private double startingShooterSpeed;
     
-    // Drive speed coefficients
+    // Control speed coefficients
     private static final double SLOW_MODE_COEFF = 1050.0;
     private static final double FAST_MODE_COEFF = 2800.0;
     private static final double TOP_SHOOTER_SPEED = 0.3;
