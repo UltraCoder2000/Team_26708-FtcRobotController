@@ -54,7 +54,7 @@ public class DecodeTeleOp extends LinearOpMode {
             motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         }
 
-        PIDFCoefficients coeffs = new PIDFCoefficients(15.0, 0.8, 2.2, 13.2);
+        PIDFCoefficients coeffs = new PIDFCoefficients(15.0, 0.2, 2.5, 13.2);
         DcMotorEx[] shooters = {leftShooter, rightShooter};
         for (DcMotorEx motor : shooters) {
             motor.setPIDFCoefficients(coeffs);
