@@ -4,15 +4,14 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 @TeleOp(name = "DecodeTeleOp")
 public class DecodeTeleOp extends LinearOpMode {
     
     // Hardware components
-    private DcMotorEx leftBackDrive, leftFrontDrive, rightBackDrive, rightFrontDrive;
-    private DcMotorEx leftShooter, rightShooter, intakeMotor;
-    private CRServo transferServo;
+    private DcMotorEx leftBackDrive, leftFrontDrive, rightBackDrive, rightFrontDrive,
+                      leftShooter,   rightShooter,   intakeMotor,    transferMotor;
 
     // Timing and control variables
     private long previousLoopEnd = 0;
@@ -22,6 +21,7 @@ public class DecodeTeleOp extends LinearOpMode {
     // Control speed coefficients
     private static final double SLOW_MODE_COEFF = 1050.0;
     private static final double FAST_MODE_COEFF = 2800.0;
+    private static final double MAX_SPEED_COEFF = 2800.0;
     private static final double TOP_SHOOTER_SPEED = 0.3;
 
     @Override
@@ -46,7 +46,7 @@ public class DecodeTeleOp extends LinearOpMode {
         leftShooter = hardwareMap.get(DcMotorEx.class, "LS");
         rightShooter = hardwareMap.get(DcMotorEx.class, "RS");
         intakeMotor = hardwareMap.get(DcMotorEx.class, "IN");
-        transferServo = hardwareMap.get(CRServo.class, "TR");
+        transferMotor = hardwareMap.get(DcMotorEx.class, "TR");
 
         DcMotor[] driveMotors = {leftBackDrive, leftFrontDrive, rightBackDrive, rightFrontDrive};
         for (DcMotor motor : driveMotors) {
@@ -54,66 +54,68 @@ public class DecodeTeleOp extends LinearOpMode {
             motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         }
 
+        PIDFCoefficients coeffs = new PIDFCoefficients(15.0, 0.2, 2.5, 13.2);
+        DcMotorEx[] shooters = {leftShooter, rightShooter};
+        for (DcMotorEx motor : shooters) {
+            motor.setPIDFCoefficients(coeffs);
+        }
+        
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         leftShooter.setDirection(DcMotor.Direction.REVERSE);
-        transferServo.setDirection(DcMotor.Direction.REVERSE);
-
-
+        rightShooter.setDirection(DcMotor.Direction.FORWARD);
+        transferMotor.setDirection(DcMotor.Direction.FORWARD);
+        intakeMotor.setDirection(DcMotor.Direction.FORWARD);
     }
 
     private void drive() {
         double drive = -gamepad1.left_stick_y;   // forward/back
-        double strafe = gamepad1.left_stick_x;   // lef t/right
+        double strafe = gamepad1.left_stick_x;   // left/right
         double turn = gamepad1.right_stick_x;    // rotation
 
-        // Compute raw motor values (without coefficient)
-        double rawLB = drive + turn - strafe;
-        double rawRB = drive - turn + strafe;
-        double rawLF = drive + turn + strafe;
-        double rawRF = drive - turn - strafe;
+        // Compute raw motor power values
+        double LB = drive + turn - strafe;
+        double RB = drive - turn + strafe;
+        double LF = drive + turn + strafe;
+        double RF = drive - turn - strafe;
 
-        // Find maximum absolute raw value
-        double maxRaw = Math.max(
-                Math.max(Math.abs(rawLB), Math.abs(rawRB)),
-                Math.max(Math.abs(rawLF), Math.abs(rawRF))
-        );
-
-        double lbN = rawLB, rbN = rawRB, lfN = rawLF, rfN = rawRF;
-
-        // Compute average of absolute reduced values and square it for smoother scaling
-        double avgAbs = (Math.abs(lbN) + Math.abs(rbN) + Math.abs(lfN) + Math.abs(rfN)) / 4.0;
+        // For smoother scaling, square the average of the absolute values of the raw numbers above
+        double avgAbs = (Math.abs(LB) + Math.abs(RB) + Math.abs(LF) + Math.abs(RF)) / 4.0;
         double scale = avgAbs * avgAbs; // squared average magnitude
 
-        // Choose coefficient based on stick-button (fast when pressed)
+        // Choose drive speed coefficient based on left stick press
         double coeff = (gamepad1.left_stick_button || gamepad1.right_stick_button)
                         ? FAST_MODE_COEFF
                         : SLOW_MODE_COEFF;
 
         // Final velocities (apply scale and coefficient)
-        double velLB = lbN * scale * coeff;
-        double velRB = rbN * scale * coeff;
-        double velLF = lfN * scale * coeff;
-        double velRF = rfN * scale * coeff;
+        double velLB = LB * scale * coeff;
+        double velRB = RB * scale * coeff;
+        double velLF = LF * scale * coeff;
+        double velRF = RF * scale * coeff;
 
+        // Set motor velocities
         leftBackDrive.setVelocity(velLB);
         rightBackDrive.setVelocity(velRB);
         leftFrontDrive.setVelocity(velLF);
         rightFrontDrive.setVelocity(velRF);
 
-        telemetry.addData("MaxRaw", "%.3f", maxRaw);
-        telemetry.addData("AvgAbs", "%.3f", avgAbs);
+        // Send important values to telemetry
         telemetry.addData("Scale", "%.3f", scale);
+        telemetry.addData("LB Intended Velocity", velLB);
+        telemetry.addData("RB Intended Velocity", velRB);
+        telemetry.addData("LF Intended Velocity", velLF);
+        telemetry.addData("RF Intended Velocity", velRF);
+        telemetry.addLine("Drive Mode: " + 
+            ((gamepad1.left_stick_button || gamepad1.right_stick_button) ? "FAST (2800)" : "SLOW (1050)"));
     }
     
     private void intake() {
         double intakePower = -gamepad2.left_stick_y;
         intakeMotor.setPower(intakePower);
-
         telemetry.addData("Intake Power", intakePower);
-        telemetry.update();
     }
     
     private void transfer() {
@@ -123,7 +125,8 @@ public class DecodeTeleOp extends LinearOpMode {
             startingTransferSpeed = 0.0;
         }
         
-        transferServo.setPower(startingTransferSpeed + gamepad2.left_trigger);
+        transferMotor.setPower(startingTransferSpeed + gamepad2.left_trigger);
+        telemetry.addData("Transfer Power", transferMotor.getPower());
     }
     
     private void shoot() {
@@ -134,8 +137,8 @@ public class DecodeTeleOp extends LinearOpMode {
         }
         
         DcMotorEx[] shooters = {leftShooter, rightShooter};
-        for (DcMotor motor : shooters) {
-            motor.setPower(startingShooterSpeed + TOP_SHOOTER_SPEED * gamepad2.right_trigger);
+        for (DcMotorEx motor : shooters) {
+            motor.setVelocity(MAX_SPEED_COEFF * (startingShooterSpeed + TOP_SHOOTER_SPEED * gamepad2.right_trigger));
         }
     }
 
@@ -143,12 +146,7 @@ public class DecodeTeleOp extends LinearOpMode {
         long loopTime = System.currentTimeMillis() - previousLoopEnd;
         previousLoopEnd = System.currentTimeMillis();
         telemetry.addLine("Loop Time = " + loopTime + " ms");
-        telemetry.addLine("Drive Mode: " + 
-            ((gamepad1.left_stick_button || gamepad1.right_stick_button) ? "FAST (2800)" : "SLOW (1050)"));
         telemetry.update();
     }
 }
-
-    
-
 

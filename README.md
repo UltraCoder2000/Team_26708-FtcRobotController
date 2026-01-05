@@ -1,9 +1,12 @@
 ## NOTICE
+IF YOU ARE PART OF THE ARGONAUTS, READ WELCOME SECTION. after this one
 
 This repository contains the public FTC SDK for the DECODE (2025-2026) competition season.
+Use SDK Java 17 for Android Studio run and build on driver hub - 
 
 ## Welcome!
-This GitHub repository contains the source code that is used to build an Android app to control a *FIRST* Tech Challenge competition robot.  To use this SDK, download/clone the entire project to your local computer.
+If you are part of 26708 The Argonauts, please read this section in detail.
+If you are part of the coding team and want to help collaborate on the code:
 
 ## Requirements
 To use this Android Studio project, you will need Android Studio Ladybug (2024.2) or later.
