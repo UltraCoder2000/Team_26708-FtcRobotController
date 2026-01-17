@@ -1,10 +1,11 @@
+//helo
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardPIDFCoefficients;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -14,14 +15,14 @@ public class DecodeTeleOp extends LinearOpMode {
 
     // Drive motors
     private DcMotorEx LB, LF, RB, RF;
-
+    ware.
     // Mechanisms
     private DcMotorEx LS, RS, IN, TR;
 
     // Limelight
     private NetworkTable limelight;
 
-    // PID constants for alignment
+    // Alignment PID
     private static final double kP = 0.025;
     private static final double kI = 0.0;
     private static final double kD = 0.002;
@@ -35,9 +36,12 @@ public class DecodeTeleOp extends LinearOpMode {
     private static final double FAST_MODE_COEFF = 2800.0;
     private static final double MAX_TURN_OUTPUT = 0.4;
 
-    // Shooter
-    private static final double MAX_SHOOTER_SPEED = 2800.0;
-    private static final double TOP_SHOOTER_SPEED = 0.25;
+    // Shooter constants
+    private static final double MIN_SHOOTER_RPM = 1800.0;
+    private static final double MAX_SHOOTER_RPM = 2800.0;
+
+    private static final double MIN_SHOOT_DISTANCE = 0.5; // meters
+    private static final double MAX_SHOOT_DISTANCE = 2.0; // meters
 
     private long lastLoop = 0;
 
@@ -81,10 +85,8 @@ public class DecodeTeleOp extends LinearOpMode {
         RS.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, shooterPID);
 
         limelight = NetworkTableInstance.getDefault().getTable("limelight");
-
-        // Force Limelight into known state
-        limelight.getEntry("ledMode").setNumber(3);     // LEDs ON
-        limelight.getEntry("pipeline").setNumber(0);   // AprilTag pipeline
+        limelight.getEntry("ledMode").setNumber(3);
+        limelight.getEntry("pipeline").setNumber(0);
     }
 
     private void drive() {
@@ -95,10 +97,7 @@ public class DecodeTeleOp extends LinearOpMode {
         boolean align = gamepad1.a;
         double tv = limelight.getEntry("tv").getDouble(0);
 
-        double speedScale = 1.0; // Default full speed
-
         if (align && tv == 1) {
-            // PID turn for alignment
             double tx = limelight.getEntry("tx").getDouble(0);
 
             long now = System.currentTimeMillis();
@@ -117,23 +116,6 @@ public class DecodeTeleOp extends LinearOpMode {
                 turn = 0;
             }
 
-            // Distance scaling using Limelight pose
-            double[] botPose = limelight.getEntry("botpose_targetspace").getDoubleArray(new double[6]);
-            if (botPose.length == 6) {
-                double distance = botPose[2]; // meters
-                double minDistance = 0.3;
-                double maxDistance = 2.0;
-                double minSpeed = 0.2;
-                double maxSpeed = 1.0;
-
-                speedScale = Math.max(minSpeed, Math.min(maxSpeed, (distance - minDistance) / (maxDistance - minDistance)));
-                telemetry.addData("distance", distance);
-                telemetry.addData("speedScale", speedScale);
-            }
-
-            telemetry.addLine("AprilTag ALIGN ACTIVE");
-            telemetry.addData("tx", tx);
-
         } else {
             turn = gamepad1.right_stick_x;
             errorSum = 0;
@@ -141,27 +123,28 @@ public class DecodeTeleOp extends LinearOpMode {
             lastPidTime = System.currentTimeMillis();
         }
 
-        // Apply mecanum formulas
         double LBp = drive + turn - strafe;
         double RBp = drive - turn + strafe;
         double LFp = drive + turn + strafe;
         double RFp = drive - turn - strafe;
 
-        // Normalize speeds
-        double maxMag = Math.max(Math.max(Math.abs(LBp), Math.abs(RBp)), Math.max(Math.abs(LFp), Math.abs(RFp)));
-        if (maxMag > 1.0) {
-            LBp /= maxMag;
-            RBp /= maxMag;
-            LFp /= maxMag;
-            RFp /= maxMag;
+        double max = Math.max(Math.max(Math.abs(LBp), Math.abs(RBp)),
+                Math.max(Math.abs(LFp), Math.abs(RFp)));
+        if (max > 1.0) {
+            LBp /= max;
+            RBp /= max;
+            LFp /= max;
+            RFp /= max;
         }
 
-        double baseSpeed = (gamepad1.left_stick_button || gamepad1.right_stick_button) ? FAST_MODE_COEFF : SLOW_MODE_COEFF;
+        double speed = (gamepad1.left_stick_button || gamepad1.right_stick_button)
+                ? FAST_MODE_COEFF
+                : SLOW_MODE_COEFF;
 
-        LB.setVelocity(LBp * speedScale * baseSpeed);
-        RB.setVelocity(RBp * speedScale * baseSpeed);
-        LF.setVelocity(LFp * speedScale * baseSpeed);
-        RF.setVelocity(RFp * speedScale * baseSpeed);
+        LB.setVelocity(LBp * speed);
+        RB.setVelocity(RBp * speed);
+        LF.setVelocity(LFp * speed);
+        RF.setVelocity(RFp * speed);
     }
 
     private void intake() {
@@ -175,13 +158,37 @@ public class DecodeTeleOp extends LinearOpMode {
     }
 
     private void shoot() {
-        double target = TOP_SHOOTER_SPEED;
-        if (gamepad2.right_bumper) {
-            target += TOP_SHOOTER_SPEED * gamepad2.right_trigger;
+        double tv = limelight.getEntry("tv").getDouble(0);
+        double targetRPM = 0;
+
+        if (gamepad2.right_bumper && tv == 1) {
+            double[] pose = limelight.getEntry("botpose_targetspace")
+                    .getDoubleArray(new double[6]);
+
+            if (pose.length == 6) {
+                double distance = pose[2];
+
+                // Linear interpolation
+                double t = (distance - MIN_SHOOT_DISTANCE) /
+                        (MAX_SHOOT_DISTANCE - MIN_SHOOT_DISTANCE);
+
+                t = Math.max(0.0, Math.min(1.0, t));
+                targetRPM = MIN_SHOOTER_RPM +
+                        t * (MAX_SHOOTER_RPM - MIN_SHOOTER_RPM);
+
+                telemetry.addData("Shooter Distance (m)", distance);
+            }
         }
-        double velocity = MAX_SHOOTER_SPEED * target;
-        LS.setVelocity(velocity);
-        RS.setVelocity(velocity);
+
+        // Manual fallback (no tag or bumper not pressed)
+        if (!gamepad2.right_bumper) {
+            targetRPM = 0;
+        }
+
+        LS.setVelocity(targetRPM);
+        RS.setVelocity(targetRPM);
+
+        telemetry.addData("Shooter RPM", targetRPM);
     }
 
     private void telemetryLoop() {
@@ -190,4 +197,5 @@ public class DecodeTeleOp extends LinearOpMode {
         lastLoop = now;
         telemetry.update();
     }
+
 }
