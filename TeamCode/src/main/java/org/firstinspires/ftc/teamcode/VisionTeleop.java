@@ -18,7 +18,7 @@ public class VisionTeleop extends LinearOpMode {
     private DcMotorEx LS, RS, IN, TR;
 
     // Limelight
-    private Limelight3A limelight;
+    private Limelight3A LM;
 
     // PID constants for alignment
     private static final double kP = 0.025;
@@ -36,7 +36,7 @@ public class VisionTeleop extends LinearOpMode {
 
     // Shooter
     private static final double MAX_SHOOTER_SPEED = 2800.0;
-    private static final double TOP_SHOOTER_SPEED = 0.25;
+    private static final double TOP_SHOOTER_SPEED = 0.6;
 
     private long lastLoop = 0;
 
@@ -86,11 +86,11 @@ public class VisionTeleop extends LinearOpMode {
         RS.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, shooterPID);
 
         // Limelight
-        limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight.pipelineSwitch(0); // AprilTag pipeline
-        limelight.start();
+        LM = hardwareMap.get(Limelight3A.class, "LM");
+        LM.pipelineSwitch(0); // AprilTag pipeline
+        LM.start();
 
-        limelight.start();
+        LM.start();
     }
 
     private void drive() {
@@ -102,7 +102,7 @@ public class VisionTeleop extends LinearOpMode {
         boolean align = gamepad1.a;
         double speedScale = 1.0;
 
-        LLResult result = limelight.getLatestResult();
+        LLResult result = LM.getLatestResult();
 
         if (align && result != null && result.isValid()) {
 
