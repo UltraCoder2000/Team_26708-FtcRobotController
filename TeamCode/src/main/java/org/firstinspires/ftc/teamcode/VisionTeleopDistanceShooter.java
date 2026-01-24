@@ -18,7 +18,7 @@ public class VisionTeleopDistanceShooter extends LinearOpMode {
     private DcMotorEx LS, RS, IN, TR;
 
     // Limelight
-    private Limelight3A limelight;
+    private Limelight3A LM;
 
     // PID constants for heading alignment
     private static final double kP = 0.025;
@@ -92,9 +92,9 @@ public class VisionTeleopDistanceShooter extends LinearOpMode {
         RS.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, shooterPID);
 
         // Limelight
-        limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight.pipelineSwitch(0); // AprilTag pipeline
-        limelight.start();
+        LM = hardwareMap.get(Limelight3A.class, "limelight");
+        LM.pipelineSwitch(0); // AprilTag pipeline
+        LM.start();
     }
 
     private void drive() {
@@ -103,10 +103,10 @@ public class VisionTeleopDistanceShooter extends LinearOpMode {
         double strafe = gamepad1.left_stick_x;
         double turn;
 
-        boolean align = gamepad1.a;
+        boolean align = gamepad2.a;
         double speedScale = 1.0;
 
-        LLResult result = limelight.getLatestResult();
+        LLResult result = LM.getLatestResult();
 
         if (align && result != null && result.isValid()) {
 
@@ -182,7 +182,7 @@ public class VisionTeleopDistanceShooter extends LinearOpMode {
 
     private void shoot() {
 
-        LLResult result = limelight.getLatestResult();
+        LLResult result = LM.getLatestResult();
 
         double shooterTarget = BASE_SHOOTER_SPEED;
 
