@@ -1,12 +1,5 @@
-## NOTICE
-IF YOU ARE PART OF THE ARGONAUTS, READ WELCOME SECTION. after this header
-
-This repository contains the public FTC SDK for the DECODE (2025-2026) competition season.
-Use SDK Java 17 for Android Studio run and build on driver hub - 
-
-## Welcome!
-If you are part of 26708 The Argonauts, please read this section in detail.
-If you are part of the coding team and want to help collaborate on the code follow these instructions:
+## SETUP GUIDE
+If you are part of the coding team on team 26708 and want to help collaborate on the code follow these instructions:
 🚀 Android Development Setup Guide for FTC Robot Controller
 This guide walks you through installing Android Studio and accessing the FTC Robot Controller repository on GitHub. Follow these steps to get your development environment up and running.
 
@@ -46,9 +39,12 @@ Android Studio will begin syncing and building the project.
 If prompted to install missing SDKs or tools, accept and proceed.
 
 ✅ You're Ready to Code!
-You now have Android Studio installed and the FTC Robot Controller project loaded. Time to start coding, testing, and driving your robot to victory!
-PS- this was written by AI
+You now have Android Studio installed and the FTC Robot Controller project loaded. Time to start coding, testing, and driving our robot to victory!
 
+-------------------------
+
+## Welcome!
+This GitHub repository contains the source code that is used to build an Android app to control a *FIRST* Tech Challenge competition robot.  To use this SDK, download/clone the entire project to your local computer.
 
 ## Requirements
 To use this Android Studio project, you will need Android Studio Ladybug (2024.2) or later.
@@ -103,6 +99,21 @@ Samples Folder: &nbsp;&nbsp; [/FtcRobotController/src/main/java/org/firstinspire
 The readme.md file located in the [/TeamCode/src/main/java/org/firstinspires/ftc/teamcode](TeamCode/src/main/java/org/firstinspires/ftc/teamcode) folder contains an explanation of the sample naming convention, and instructions on how to copy them to your own project space.
 
 # Release Information
+
+## Version 11.1 (20251231-104637)
+
+### Enhancements
+
+* Gamepad triggers can now be accessed as booleans and have edge detection supported.
+* GoBildaPinpointDriver now supports Pinpoint v2 functionality
+* Adds webcam calibrations for goBILDA's USB camera.
+
+### Bug Fixes
+* Fixes issue [1654](https://github.com/FIRST-Tech-Challenge/FtcRobotController/issues/1654) in GoBildaPinpointDriver that caused error if resolution was set in other than MM
+* Fixes issue [1628](https://github.com/FIRST-Tech-Challenge/FtcRobotController/issues/1628) Blocks editor displays incorrect Java code for gamepad edge detection blocks.
+* Fixes possible race condition issue [1884](https://github.com/FIRST-Tech-Challenge/FtcRobotController/issues/1884) on Driver Station startup when Driver Station name doesn't match the Robot Controller name.
+* Fixes issue [1863](https://github.com/FIRST-Tech-Challenge/FtcRobotController/issues/1863) - Incorrect package paths in samples.
+* Fixes an issue where an OnBotJava filename that begins with a lowercase character would fail to properly rename the file if the user tried to rename it so that it begins with an uppercase character.
 
 ## Version 11.0 (20250827-105138)
 
