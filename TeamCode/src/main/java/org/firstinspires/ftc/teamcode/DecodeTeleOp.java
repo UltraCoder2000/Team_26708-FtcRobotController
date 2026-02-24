@@ -1,4 +1,6 @@
-package org.firstinspires.ftc.teamcode;
+
+//Correct Code
+ package org.firstinspires.ftc.teamcode;
 
 // Imports
 import com.qualcomm.hardware.limelightvision.LLResult;
@@ -149,7 +151,7 @@ public class DecodeTeleOp extends LinearOpMode {
         double speedMultiplier;
         switch (driveSpeed) {
             case ULTRA: speedMultiplier = 1.0;  break;
-            case FAST:  speedMultiplier = 0.85; break;
+            case FAST:  speedMultiplier = 0.75; break;
             case SLOW:
             default:    speedMultiplier = 0.45; break;
         }
