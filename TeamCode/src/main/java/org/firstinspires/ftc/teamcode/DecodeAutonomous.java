@@ -239,7 +239,7 @@ public class DecodeAutonomous extends OpMode {
                 if (pathTimer.getElapsedTimeSeconds() < 1.5) {
                     break;
                 }
-                transferMotor.setPower(-0.4);
+                transferMotor.setPower(-0.6);
                 follower.followPath(grabPickup1, 0.6, true);
                 setPathState(PathState.GRAB_PICKUP_1);
                 break;
@@ -276,7 +276,7 @@ public class DecodeAutonomous extends OpMode {
                 if (pathTimer.getElapsedTimeSeconds() < 1.5) {
                     break;
                 }
-                transferMotor.setPower(-0.4);
+                transferMotor.setPower(-0.6);
                 follower.followPath(grabPickup2, 0.6, true);
                 setPathState(PathState.GRAB_PICKUP_2);
                 break;
@@ -306,7 +306,7 @@ public class DecodeAutonomous extends OpMode {
                 if (pathTimer.getElapsedTimeSeconds() < 1.5) {
                     break;
                 }
-                transferMotor.setPower(-0.4);
+                transferMotor.setPower(-0.6);
                 follower.followPath(grabPickup3, 0.6, true);
                 setPathState(PathState.GRAB_PICKUP_3);
                 break;
