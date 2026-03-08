@@ -209,20 +209,25 @@ public class DecodeTeleOp extends LinearOpMode {
         if (isFullyAimed && autoFireStartTime != -1) {
             double timeElapsed = getRuntime() - autoFireStartTime;
 
-            // Fire for 3 seconds after being fully aimed
-            if (timeElapsed < 3.0) {
+            // NEW: RPM Check. Ensures actual velocity is within 50 ticks of scaled target
+            boolean shooterAtSpeed = Math.abs(leftShooter.getVelocity() - (targetShooterVelocity * 7.0 / 15.0)) < 50;
+
+            // Only fire if the time is within 3s AND the shooter is actually ready
+            if (timeElapsed < 3.0 && shooterAtSpeed) {
                 intakeMotor.setPower(0.5);    // Spin intake forward
                 transferMotor.setPower(0.7); // Spin transfer to shoot
+            } else if (timeElapsed < 3.0) {
+                // Aimed, but waiting for RPM... keep motors off
+                intakeMotor.setPower(0);
+                transferMotor.setPower(0);
             } else {
                 // After 3 seconds, stop the sequence and reset
                 isFullyAimed = false;
                 autoFireStartTime = -1;
-                // Optional: Automatically disable auto-aim so the driver has full control back
                 autoAimEnabled = false;
             }
         } else {
             // --- MANUAL CONTROLS ---
-            // This runs only if the auto-fire sequence isn't active
             intakeMotor.setPower(-gamepad2.left_stick_y);
             if (gamepad2.left_bumper) {
                 transferMotor.setPower(-1.0);
